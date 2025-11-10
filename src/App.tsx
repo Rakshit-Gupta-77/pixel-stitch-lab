@@ -8,6 +8,13 @@ import Products from "./pages/Products";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import CustomizeStudio from "./pages/CustomizeStudio";
+import AIDesigner from "./pages/AIDesigner";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Dashboard from "./pages/Dashboard";
+import Gallery from "./pages/Gallery";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +28,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/customize" element={<CustomizeStudio />} />
+          <Route path="/ai-designer" element={<AIDesigner />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -20,15 +20,29 @@ const Header = () => {
           <Link to="/products" className="text-sm font-medium hover:text-primary transition-colors">
             Products
           </Link>
+          <Link to="/customize" className="text-sm font-medium hover:text-primary transition-colors">
+            Studio
+          </Link>
+          <Link to="/ai-designer" className="text-sm font-medium hover:text-primary transition-colors">
+            AI Designer
+          </Link>
+          <Link to="/gallery" className="text-sm font-medium hover:text-primary transition-colors">
+            Gallery
+          </Link>
           <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors">
             About
+          </Link>
+          <Link to="/contact" className="text-sm font-medium hover:text-primary transition-colors">
+            Contact
           </Link>
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
+          <Link to="/cart">
+            <Button variant="ghost" size="icon">
+              <ShoppingCart className="h-5 w-5" />
+            </Button>
+          </Link>
           <Link to="/login">
             <Button variant="outline" size="sm">
               <User className="h-4 w-4" />
