@@ -37,6 +37,11 @@ const AIDesigner = () => {
             </p>
           </div>
 
+          {/* Coming Soon Note */}
+          <div className="mx-auto max-w-3xl bg-secondary/40 border rounded-xl p-4 text-sm text-muted-foreground">
+            Full AI generation will connect to the backend soon. This page is a frontend preview of the experience.
+          </div>
+
           {/* Prompt Input */}
           <div className="bg-card rounded-xl p-8 border shadow-card space-y-6 animate-slide-in">
             <div className="space-y-3">

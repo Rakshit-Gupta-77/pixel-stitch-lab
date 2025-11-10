@@ -12,6 +12,7 @@ import CustomizeStudio from "./pages/CustomizeStudio";
 import AIDesigner from "./pages/AIDesigner";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import Payments from "./pages/Payments";
 import Dashboard from "./pages/Dashboard";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/ai-designer" element={<AIDesigner />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payments" element={<Payments />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/about" element={<About />} />

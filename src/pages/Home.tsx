@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import Design3DModal from "@/components/Design3DModal";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -61,11 +62,7 @@ const Home = () => {
                 Create unique, personalized clothing with AI-powered design tools and 3D visualization. Express yourself like never before.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link to="/products">
-                  <Button variant="hero" size="lg">
-                    Start Designing
-                  </Button>
-                </Link>
+                <Design3DModal />
                 <Link to="/about">
                   <Button variant="outline" size="lg">
                     Learn More
