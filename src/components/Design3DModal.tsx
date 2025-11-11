@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
   Suspense,
+  useEffect,
 } from "react";
 import {
   Dialog,
@@ -21,9 +22,60 @@ import {
   Environment,
   ContactShadows,
   RoundedBox,
-  useTexture,
 } from "@react-three/drei";
 import * as THREE from "three";
+
+// Client-safe lazy texture loader
+function useLazyTexture(url: string | null): {
+  texture?: THREE.Texture;
+  loading: boolean;
+  error: Error | null;
+} {
+  const [texture, setTexture] = useState<THREE.Texture | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!url) {
+      setTexture(undefined);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      url,
+      (tex) => {
+        if (cancelled) return;
+        try {
+          // Ensure proper colorspace for sRGB images
+          (tex as any).colorSpace = (THREE as any).SRGBColorSpace || (THREE as any).sRGBEncoding;
+        } catch {}
+        setTexture(tex);
+        setLoading(false);
+      },
+      undefined,
+      (err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err : new Error("Failed to load texture"));
+        setTexture(undefined);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return { texture, loading, error };
+}
 
 // 3D hoodie model built from primitives
 function HoodieModel({ map }: { map?: THREE.Texture }) {
@@ -40,7 +92,7 @@ function HoodieModel({ map }: { map?: THREE.Texture }) {
       metalness: 0.1,
     });
 
-    if (map) {
+    if (map && (map as any).isTexture) {
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
       map.repeat.set(1, 1);
       mat.map = map;
@@ -94,8 +146,10 @@ export default function Design3DModal({ triggerClassName }: Design3DModalProps) 
   const [open, setOpen] = useState(false);
   const [textureUrl, setTextureUrl] = useState<string | null>(null);
 
-  // ✅ Only load the texture when there’s a valid image URL
-  const texture = textureUrl ? useTexture(textureUrl) : undefined;
+  const isClient = typeof window !== "undefined";
+
+  // Lazy texture loader safe for SSR
+  const { texture, loading: textureLoading, error: textureError } = useLazyTexture(textureUrl);
 
   // Handlers for drag/drop and file selection
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -123,6 +177,7 @@ export default function Design3DModal({ triggerClassName }: Design3DModalProps) 
   ];
 
   const placeholderTextures = useMemo(() => {
+    if (!isClient) return [] as string[];
     return aiPlaceholders.map((p) => {
       const size = 256;
       const canvas = document.createElement("canvas");
@@ -149,7 +204,7 @@ export default function Design3DModal({ triggerClassName }: Design3DModalProps) 
       }
       return canvas.toDataURL();
     });
-  }, []);
+  }, [isClient]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -177,21 +232,41 @@ export default function Design3DModal({ triggerClassName }: Design3DModalProps) 
               }
             >
               <ErrorBoundary>
-                <Canvas camera={{ position: [3, 2, 4], fov: 45 }}>
-                  <ambientLight intensity={0.6} />
-                  <directionalLight position={[5, 5, 5]} intensity={0.7} />
-                  <Environment preset="city" />
-                  {/* ✅ Safe texture handling */}
-                  <HoodieModel map={textureUrl ? texture : undefined} />
-                  <ContactShadows
-                    position={[0, -1.2, 0]}
-                    opacity={0.4}
-                    scale={10}
-                    blur={2}
-                    far={2}
-                  />
-                  <OrbitControls enablePan={false} />
-                </Canvas>
+                {isClient ? (
+                  <>
+                    {textureUrl && textureLoading && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center text-white/80">
+                        Loading texture...
+                      </div>
+                    )}
+                    {textureUrl && textureError && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center text-red-300">
+                        Failed to load texture.
+                      </div>
+                    )}
+                    <Canvas camera={{ position: [3, 2, 4], fov: 45 }}>
+                      <ambientLight intensity={0.6} />
+                      <directionalLight position={[5, 5, 5]} intensity={0.7} />
+                      <Environment preset="city" />
+                      {/* ✅ Safe texture handling */}
+                      <HoodieModel
+                        map={texture && (texture as any).isTexture ? texture : undefined}
+                      />
+                      <ContactShadows
+                        position={[0, -1.2, 0]}
+                        opacity={0.4}
+                        scale={10}
+                        blur={2}
+                        far={2}
+                      />
+                      <OrbitControls enablePan={false} />
+                    </Canvas>
+                  </>
+                ) : (
+                  <div className="flex justify-center items-center h-full text-white">
+                    Loading 3D...
+                  </div>
+                )}
               </ErrorBoundary>
             </Suspense>
 
