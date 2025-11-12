@@ -88,13 +88,15 @@ function HoodieModel({ map }: { map?: THREE.Texture }) {
   });
 
   const fabric = useMemo(() => {
+    if (typeof window === "undefined" || !THREE) return null;
+    
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color("#A0C4FF"),
       roughness: 0.8,
       metalness: 0.1,
     });
 
-    if (map && (map as any).isTexture) {
+    if (map && (map as any).isTexture && THREE.RepeatWrapping !== undefined) {
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
       map.repeat.set(1, 1);
       mat.map = map;
@@ -103,6 +105,8 @@ function HoodieModel({ map }: { map?: THREE.Texture }) {
 
     return mat;
   }, [map]);
+
+  if (!fabric) return null;
 
   return (
     <group ref={group} dispose={null}>
