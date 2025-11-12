@@ -1,6 +1,7 @@
+import React, { Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import Design3DModal from "@/components/Design3DModal";
+const Design3DModal = React.lazy(() => import("@/components/Design3DModal"));
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,6 +12,8 @@ import hoodieImage from "@/assets/product-hoodie.jpg";
 import jacketImage from "@/assets/product-jacket.jpg";
 
 const Home = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
   const features = [
     {
       icon: Sparkles,
@@ -62,7 +65,13 @@ const Home = () => {
                 Create unique, personalized clothing with AI-powered design tools and 3D visualization. Express yourself like never before.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Design3DModal />
+                {isClient ? (
+                  <Suspense fallback={<Button variant="hero" size="lg">Loading...</Button>}>
+                    <Design3DModal />
+                  </Suspense>
+                ) : (
+                  <Button variant="hero" size="lg">Start Designing</Button>
+                )}
                 <Link to="/about">
                   <Button variant="outline" size="lg">
                     Learn More

@@ -54,8 +54,10 @@ function useLazyTexture(url: string | null): {
       (tex) => {
         if (cancelled) return;
         try {
-          // Ensure proper colorspace for sRGB images
-          (tex as any).colorSpace = (THREE as any).SRGBColorSpace || (THREE as any).sRGBEncoding;
+          // Ensure proper colorspace for sRGB images (Three r181+)
+          if ((tex as any).colorSpace && (THREE as any).SRGBColorSpace) {
+            (tex as any).colorSpace = (THREE as any).SRGBColorSpace;
+          }
         } catch {}
         setTexture(tex);
         setLoading(false);
