@@ -1,9 +1,20 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Palette, ShoppingCart, User, Menu } from "lucide-react";
+import { Palette, ShoppingCart, User, Menu, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader as SheetHead, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-gradient-to-r from-[hsl(var(--primary))]/70 via-[hsl(var(--secondary))]/60 to-[hsl(var(--accent))]/60 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
@@ -42,22 +53,56 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link to="/cart">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Link to="/login">
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Sign In</span>
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button variant="hero" size="sm">
-              Get Started
-            </Button>
-          </Link>
+          {user && (
+            <Link to="/cart">
+              <Button variant="ghost" size="icon">
+                <ShoppingCart className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Account</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="cursor-pointer">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/customize" className="cursor-pointer">Customize Studio</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/ai-designer" className="cursor-pointer">AI Designer</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Sign In</span>
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button variant="hero" size="sm">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu */}
