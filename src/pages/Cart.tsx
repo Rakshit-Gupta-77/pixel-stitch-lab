@@ -2,35 +2,64 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+
+interface CartItem {
+  id: number;
+  product_id: string;
+  name: string;
+  design: string;
+  size: string;
+  color: string;
+  price: number;
+  quantity: number;
+  description?: string;
+  image_url?: string;
+}
 
 const Cart = () => {
-  const [items] = useState([
+  const [items, setItems] = useState<CartItem[]>([
     {
       id: 1,
+      product_id: '1',
       name: "Custom Hoodie",
       design: "Dragon Design",
       size: "M",
       color: "Black",
       price: 49.99,
       quantity: 1,
+      description: "Premium custom hoodie",
+      image_url: "/placeholder.svg",
     },
     {
       id: 2,
+      product_id: '2',
       name: "Custom T-Shirt",
       design: "Floral Pattern",
       size: "L",
       color: "White",
       price: 29.99,
       quantity: 2,
+      description: "Comfortable cotton t-shirt",
+      image_url: "/placeholder.svg",
     },
   ]);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 9.99;
-  const total = subtotal + shipping;
+  const updateQuantity = (id: number, delta: number) => {
+    setItems(items =>
+      items.map(item =>
+        item.id === id
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
+    );
+  };
+
+  const removeItem = (id: number) => {
+    setItems(items => items.filter(item => item.id !== id));
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -71,11 +100,19 @@ const Cart = () => {
 
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
-                      <Button variant="outline" size="icon">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => updateQuantity(item.id, -1)}
+                      >
                         <Minus className="h-4 w-4" />
                       </Button>
                       <span className="w-8 text-center font-medium">{item.quantity}</span>
-                      <Button variant="outline" size="icon">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => updateQuantity(item.id, 1)}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -87,7 +124,11 @@ const Cart = () => {
                     </div>
 
                     {/* Remove */}
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => removeItem(item.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -95,39 +136,23 @@ const Cart = () => {
               )}
             </div>
 
-            {/* Order Summary */}
+            {/* Checkout */}
             <div className="space-y-6">
-              <div className="bg-card rounded-lg border p-6 space-y-4 sticky top-4">
-                <h2 className="text-xl font-bold">Order Summary</h2>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="font-medium">${shipping.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t pt-3 flex justify-between">
-                    <span className="font-semibold">Total</span>
-                    <span className="font-bold text-xl">${total.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-4">
-                  <Input placeholder="Promo code" />
-                  <Button variant="outline" className="w-full">Apply</Button>
-                </div>
-
-                <Button variant="hero" size="lg" className="w-full" asChild>
-                  <Link to="/checkout">Proceed to Checkout</Link>
-                </Button>
-
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/products">Continue Shopping</Link>
-                </Button>
-              </div>
+              <CheckoutForm 
+                items={items.map(item => ({
+                  product_id: item.product_id,
+                  name: item.name,
+                  description: item.description || item.design,
+                  price: item.price,
+                  quantity: item.quantity,
+                  size: item.size,
+                  image_url: item.image_url,
+                }))}
+              />
+              
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/products">Continue Shopping</Link>
+              </Button>
             </div>
           </div>
         </div>

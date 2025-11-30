@@ -1,1 +1,7 @@
 project_id = "uykqwkycnursxhmesusx"
+
+[functions.generate-image]
+verify_jwt = true
+
+[functions.create-checkout]
+verify_jwt = true
