@@ -23,16 +23,34 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { 
+        global: { 
+          headers: { Authorization: authHeader } 
+        } 
+      }
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    console.log('User authentication result:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      error: userError?.message 
+    });
+    
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      throw new Error(`Authentication failed: ${userError?.message || 'No user found'}`);
     }
 
     const { items, designId } = await req.json();
