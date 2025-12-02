@@ -16,10 +16,12 @@ import {
   Trash2,
   Sparkles,
   Upload,
+  ShoppingCart,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { AddToCartDialog } from './AddToCartDialog';
 
 export const DesignCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,6 +35,8 @@ export const DesignCanvas = () => {
   const [designName, setDesignName] = useState('My Design');
   const [history, setHistory] = useState<string[]>([]);
   const [historyStep, setHistoryStep] = useState(0);
+  const [savedDesignId, setSavedDesignId] = useState<string | null>(null);
+  const [showAddToCart, setShowAddToCart] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -208,15 +212,17 @@ export const DesignCanvas = () => {
         multiplier: 1
       });
 
-      const { error } = await supabase.from('designs').insert({
+      const { data, error } = await supabase.from('designs').insert({
         user_id: user.id,
         name: designName,
         design_data: designData,
         thumbnail_url: thumbnail,
         is_public: false,
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      setSavedDesignId(data.id);
 
       toast({
         title: 'Success',
@@ -232,6 +238,28 @@ export const DesignCanvas = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Required',
+        description: 'Please login to add items to cart',
+      });
+      return;
+    }
+
+    if (!savedDesignId) {
+      toast({
+        variant: 'destructive',
+        title: 'Save Design First',
+        description: 'Please save your design before adding to cart',
+      });
+      return;
+    }
+
+    setShowAddToCart(true);
   };
 
   const handleExport = () => {
@@ -428,6 +456,10 @@ export const DesignCanvas = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
+              <Button onClick={handleAddToCart} size="sm" variant="accent">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart
+              </Button>
             </div>
           </div>
           <div className="border rounded-lg overflow-hidden bg-white shadow-inner">
@@ -442,6 +474,12 @@ export const DesignCanvas = () => {
         accept="image/*"
         className="hidden"
         onChange={handleImageUpload}
+      />
+
+      <AddToCartDialog 
+        open={showAddToCart}
+        onOpenChange={setShowAddToCart}
+        designId={savedDesignId}
       />
     </div>
   );

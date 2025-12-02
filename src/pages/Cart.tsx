@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface CartItem {
-  id: number;
+  id: string;
   product_id: string;
   name: string;
   design: string;
@@ -20,46 +23,137 @@ interface CartItem {
 }
 
 const Cart = () => {
-  const [items, setItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      product_id: '1',
-      name: "Custom Hoodie",
-      design: "Dragon Design",
-      size: "M",
-      color: "Black",
-      price: 49.99,
-      quantity: 1,
-      description: "Premium custom hoodie",
-      image_url: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      product_id: '2',
-      name: "Custom T-Shirt",
-      design: "Floral Pattern",
-      size: "L",
-      color: "White",
-      price: 29.99,
-      quantity: 2,
-      description: "Comfortable cotton t-shirt",
-      image_url: "/placeholder.svg",
-    },
-  ]);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const updateQuantity = (id: number, delta: number) => {
-    setItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data: cartData, error } = await supabase
+          .from('cart_items')
+          .select(`
+            id,
+            quantity,
+            size,
+            design_id,
+            products (
+              id,
+              name,
+              price,
+              description,
+              image_url
+            ),
+            designs (
+              name
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        const formattedItems: CartItem[] = (cartData || []).map((item: any) => ({
+          id: item.id,
+          product_id: item.products.id,
+          name: item.products.name,
+          design: item.designs?.name || 'Custom Design',
+          size: item.size || 'M',
+          color: 'Custom',
+          price: item.products.price,
+          quantity: item.quantity,
+          description: item.products.description,
+          image_url: item.products.image_url,
+        }));
+
+        setItems(formattedItems);
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load cart items',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartItems();
+  }, [user, toast]);
+
+  const updateQuantity = async (id: string, delta: number) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    const newQuantity = Math.max(1, item.quantity + delta);
+
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .update({ quantity: newQuantity })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setItems(items =>
+        items.map(item =>
+          item.id === id
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update quantity',
+      });
+    }
+  };
+
+  const removeItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setItems(items => items.filter(item => item.id !== id));
+      
+      toast({
+        title: 'Item removed',
+        description: 'Item removed from cart',
+      });
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to remove item',
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
     );
-  };
-
-  const removeItem = (id: number) => {
-    setItems(items => items.filter(item => item.id !== id));
-  };
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
