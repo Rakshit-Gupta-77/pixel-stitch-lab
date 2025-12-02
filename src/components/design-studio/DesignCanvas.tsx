@@ -45,9 +45,6 @@ export const DesignCanvas = () => {
       backgroundColor: '#ffffff',
     });
 
-    canvas.freeDrawingBrush.color = activeColor;
-    canvas.freeDrawingBrush.width = 2;
-
     setFabricCanvas(canvas);
 
     return () => {
