@@ -57,8 +57,8 @@ serve(async (req) => {
         quantity: item.quantity || 1,
       })),
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/cart`,
+      success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/payment-cancel`,
       metadata: {
         user_id: user.id,
         design_id: designId || '',
