@@ -31,6 +31,8 @@ export const DesignCanvas = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [designName, setDesignName] = useState('My Design');
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyStep, setHistoryStep] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -62,7 +64,28 @@ export const DesignCanvas = () => {
       fabricCanvas.freeDrawingBrush.color = activeColor;
       fabricCanvas.freeDrawingBrush.width = 2;
     }
-  }, [activeTool, activeColor, fabricCanvas]);
+
+    // Save history on object modifications
+    const saveHistory = () => {
+      const json = JSON.stringify(fabricCanvas.toJSON());
+      setHistory(prev => {
+        const newHistory = prev.slice(0, historyStep + 1);
+        newHistory.push(json);
+        return newHistory;
+      });
+      setHistoryStep(prev => prev + 1);
+    };
+
+    fabricCanvas.on('object:added', saveHistory);
+    fabricCanvas.on('object:modified', saveHistory);
+    fabricCanvas.on('object:removed', saveHistory);
+
+    return () => {
+      fabricCanvas.off('object:added', saveHistory);
+      fabricCanvas.off('object:modified', saveHistory);
+      fabricCanvas.off('object:removed', saveHistory);
+    };
+  }, [activeTool, activeColor, fabricCanvas, historyStep]);
 
   const handleToolClick = (tool: typeof activeTool) => {
     setActiveTool(tool);
@@ -254,6 +277,32 @@ export const DesignCanvas = () => {
     }
   };
 
+  const handleUndo = () => {
+    if (!fabricCanvas || historyStep === 0) return;
+    
+    const newStep = historyStep - 1;
+    setHistoryStep(newStep);
+    
+    if (history[newStep]) {
+      fabricCanvas.loadFromJSON(history[newStep], () => {
+        fabricCanvas.renderAll();
+      });
+    }
+  };
+
+  const handleRedo = () => {
+    if (!fabricCanvas || historyStep >= history.length - 1) return;
+    
+    const newStep = historyStep + 1;
+    setHistoryStep(newStep);
+    
+    if (history[newStep]) {
+      fabricCanvas.loadFromJSON(history[newStep], () => {
+        fabricCanvas.renderAll();
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-6">
       {/* Left Toolbar */}
@@ -335,6 +384,24 @@ export const DesignCanvas = () => {
         </div>
 
         <div className="pt-4 border-t space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={handleUndo} 
+              variant="outline" 
+              size="sm"
+              disabled={historyStep === 0}
+            >
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button 
+              onClick={handleRedo} 
+              variant="outline" 
+              size="sm"
+              disabled={historyStep >= history.length - 1}
+            >
+              <Redo className="h-4 w-4" />
+            </Button>
+          </div>
           <Button onClick={handleDelete} variant="outline" size="sm" className="w-full">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
